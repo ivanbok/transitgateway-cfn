@@ -275,7 +275,6 @@ Resources:
   # Create JumpHost in Public Subnet A
   JumpHost:
     Type: AWS::EC2::Instance
-    DependsOn: apiGateway
     Properties:
       AvailabilityZone: !GetAtt VPCAPublicSubnet.AvailabilityZone
       ImageId: ami-0bd6906508e74f692
@@ -300,7 +299,6 @@ Resources:
   # Create JumpHost in Public Subnet A
   JumpHost:
     Type: AWS::EC2::Instance
-    DependsOn: apiGateway
     Properties:
       AvailabilityZone: !GetAtt VPCAPublicSubnet.AvailabilityZone
       ImageId: ami-0bd6906508e74f692
@@ -326,7 +324,6 @@ Resources:
   # Create Private Instance in VPC A
   PrivateInstanceVPCA:
     Type: AWS::EC2::Instance
-    DependsOn: apiGateway
     Properties:
       AvailabilityZone: !GetAtt VPCAPrivateSubnet.AvailabilityZone
       ImageId: ami-0bd6906508e74f692
@@ -352,7 +349,6 @@ Resources:
   # Create Private Instance in VPC B
   PrivateInstanceVPCB:
     Type: AWS::EC2::Instance
-    DependsOn: apiGateway
     Properties:
       AvailabilityZone: !GetAtt VPCBPrivateSubnet.AvailabilityZone
       ImageId: ami-0bd6906508e74f692
@@ -378,7 +374,6 @@ Resources:
   # Create Private Instance in VPC C
   PrivateInstanceVPCC:
     Type: AWS::EC2::Instance
-    DependsOn: apiGateway
     Properties:
       AvailabilityZone: !GetAtt VPCCPrivateSubnet.AvailabilityZone
       ImageId: ami-0bd6906508e74f692
