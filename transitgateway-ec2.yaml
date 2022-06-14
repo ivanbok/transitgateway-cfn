@@ -295,6 +295,7 @@ Resources:
         FromPort: 22
         ToPort: 22
         IpProtocol: tcp
+      VpcId: !Ref VPCA
 
   # Create Private Instance in VPC A
   PrivateInstanceVPCA:
@@ -320,6 +321,7 @@ Resources:
         FromPort: 22
         ToPort: 22
         IpProtocol: tcp
+      VpcId: !Ref VPCA
 
   # Create Private Instance in VPC B
   PrivateInstanceVPCB:
@@ -345,6 +347,7 @@ Resources:
         FromPort: 22
         ToPort: 22
         IpProtocol: tcp
+      VpcId: !Ref VPCB
 
   # Create Private Instance in VPC C
   PrivateInstanceVPCC:
@@ -370,3 +373,4 @@ Resources:
         FromPort: 22
         ToPort: 22
         IpProtocol: tcp
+      VpcId: !Ref VPCC
