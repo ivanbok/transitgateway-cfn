@@ -1,0 +1,402 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  EC2KeyName:
+    Type: String
+    Description: Enter your EC2 Key Name
+
+Resources:
+  # Create Transit Gateway
+  TransitGatewayVPCABC:
+    Type: AWS::EC2::TransitGateway
+    Properties: 
+      AmazonSideAsn: 64512
+      AutoAcceptSharedAttachments: disable
+      DefaultRouteTableAssociation: enable
+      DefaultRouteTablePropagation: enable
+      Description: Transit Gateway for VPC A, B and C
+      DnsSupport: enable
+      MulticastSupport: disable
+      TransitGatewayCidrBlocks: 
+        - 10.0.0.0/8
+      VpnEcmpSupport: enable
+
+  # Create VPC A
+  VPCA:
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags: 
+        - Key: Name
+          Value: VPC A
+        - Key: VPC
+          Value: VPC A
+  
+  # Create Transit Gateway Attachment for VPC A
+  VPCATGWAttachment:
+    Type: AWS::EC2::TransitGatewayAttachment
+    Properties: 
+      SubnetIds: 
+        - !Ref VPCAPrivateSubnet
+      Tags: 
+        - Key: VPC
+          Value: VPC A
+      TransitGatewayId: !Ref TransitGatewayVPCABC
+      VpcId: !Ref VPCA
+
+  # Internet Gateway for VPC A
+  IGWVPCA:
+    Type: AWS::EC2::InternetGateway
+    Properties: 
+      Tags: 
+        - Key: VPC
+          Value: VPC A
+
+  # Attachment for IGW to VPC A
+  VPCAIGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: 
+      InternetGatewayId: !Ref IGWVPCA
+      VpcId: !Ref VPCA
+
+  # Create Public Subnet for VPC A
+  VPCAPublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VPCA
+      Tags: 
+        - Key: Name
+          Value: VPC A Public Subnet
+        - Key: VPC
+          Value: VPC A
+        - Key: Subnet-Type
+          Value: Public
+
+  # Create Route Table for Public Subnet in VPC A
+  VPCAPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      Tags: 
+        - Key: VPC
+          Value: VPC A
+      VpcId: !Ref VPCA
+
+  # Create Subnet Association for Public Route Table VPC A
+  VPCAPublicRouteTableSubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref VPCAPublicRouteTable
+      SubnetId: !Ref VPCAPublicSubnet
+
+  # Route Table Entry to attach VPC A Public Subnet to Internet Gateway
+  VPCAPublicRouteTableRoute1:
+    Type: AWS::EC2::Route
+    Properties: 
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref IGWVPCA
+      RouteTableId: !Ref VPCAPublicRouteTable
+
+  # Create Private Subnet for VPC A
+  VPCAPrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: !GetAtt VPCAPublicSubnet.AvailabilityZone
+      CidrBlock: 10.0.2.0/24
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPCA
+      Tags: 
+        - Key: Name
+          Value: VPC A Private Subnet
+        - Key: VPC
+          Value: VPC A
+        - Key: Subnet-Type
+          Value: Private
+
+  # Create Route Table for Private Subnet in VPC A
+  VPCAPrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      Tags: 
+        - Key: VPC
+          Value: VPC A
+      VpcId: !Ref VPCA
+
+  # Create Subnet Association for Private Route Table VPC A
+  VPCAPrivateRouteTableSubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref VPCAPrivateRouteTable
+      SubnetId: !Ref VPCAPrivateSubnet
+
+  # Route Table Entry to attach VPC A to TGW
+  VPCAPrivateRouteTableRoute1:
+    DependsOn: VPCATGWAttachment
+    Type: AWS::EC2::Route
+    Properties: 
+      DestinationCidrBlock: 10.0.0.0/8 # Consider using GetAtt to Transit Gateway
+      RouteTableId: !Ref VPCAPrivateRouteTable
+      TransitGatewayId: !Ref TransitGatewayVPCABC
+
+  # Create VPC B
+  VPCB:
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: 10.1.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags: 
+        - Key: Name
+          Value: VPC B
+        - Key: VPC
+          Value: VPC B
+
+  # Create Transit Gateway Attachment for VPC B
+  VPCBTGWAttachment:
+    Type: AWS::EC2::TransitGatewayAttachment
+    Properties: 
+      SubnetIds: 
+        - !Ref VPCBPrivateSubnet
+      Tags: 
+        - Key: VPC
+          Value: VPC B
+      TransitGatewayId: !Ref TransitGatewayVPCABC
+      VpcId: !Ref VPCB
+
+  # Create Private Subnet for VPC B
+  VPCBPrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      CidrBlock: 10.1.0.0/24
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPCB
+      Tags: 
+        - Key: Name
+          Value: VPC B Private Subnet
+        - Key: VPC
+          Value: VPC B
+        - Key: Subnet-Type
+          Value: Private
+
+  # Create Route Table for Private Subnet in VPC B
+  VPCBPrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      Tags: 
+        - Key: VPC
+          Value: VPC B
+      VpcId: !Ref VPCB
+
+  # Create Subnet Association for Private Route Table VPC B
+  VPCBPrivateRouteTableSubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref VPCBPrivateRouteTable
+      SubnetId: !Ref VPCBPrivateSubnet
+
+  # Route Table Entry to attach VPC B to TGW
+  VPCBPrivateRouteTableRoute1:
+    DependsOn: VPCBTGWAttachment
+    Type: AWS::EC2::Route
+    Properties: 
+      DestinationCidrBlock: 10.0.0.0/8 # Consider using GetAtt to Transit Gateway
+      RouteTableId: !Ref VPCBPrivateRouteTable
+      TransitGatewayId: !Ref TransitGatewayVPCABC
+
+  # Create VPC C
+  VPCC:
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: 10.2.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags: 
+        - Key: Name
+          Value: VPC C
+        - Key: VPC
+          Value: VPC C
+
+  # Create Transit Gateway Attachment for VPC C
+  VPCCTGWAttachment:
+    Type: AWS::EC2::TransitGatewayAttachment
+    Properties: 
+      SubnetIds: 
+        - !Ref VPCCPrivateSubnet
+      Tags: 
+        - Key: VPC
+          Value: VPC C
+      TransitGatewayId: !Ref TransitGatewayVPCABC
+      VpcId: !Ref VPCC
+
+  # Create Private Subnet for VPC C
+  VPCCPrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      CidrBlock: 10.2.0.0/24
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPCC
+      Tags: 
+        - Key: Name
+          Value: VPC C Private Subnet
+        - Key: VPC
+          Value: VPC C
+        - Key: Subnet-Type
+          Value: Private
+
+  # Create Route Table for Private Subnet in VPC C
+  VPCCPrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      Tags: 
+        - Key: VPC
+          Value: VPC C
+      VpcId: !Ref VPCC
+
+  # Create Subnet Association for Private Route Table VPC C
+  VPCCPrivateRouteTableSubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref VPCCPrivateRouteTable
+      SubnetId: !Ref VPCCPrivateSubnet
+
+  # Route Table Entry to attach VPC C to TGW
+  VPCCPrivateRouteTableRoute1:
+    DependsOn: VPCCTGWAttachment
+    Type: AWS::EC2::Route
+    Properties: 
+      DestinationCidrBlock: 10.0.0.0/8 # Consider using GetAtt to Transit Gateway
+      RouteTableId: !Ref VPCCPrivateRouteTable
+      TransitGatewayId: !Ref TransitGatewayVPCABC
+  
+  # Create JumpHost in Public Subnet A
+  JumpHost:
+    Type: AWS::EC2::Instance
+    DependsOn: apiGateway
+    Properties:
+      AvailabilityZone: !GetAtt VPCAPublicSubnet.AvailabilityZone
+      ImageId: ami-0bd6906508e74f692
+      InstanceType: t2.micro
+      SubnetId: !Ref VPCAPublicSubnet
+      SecurityGroups:
+      - !Ref JumpHostSecurityGroup
+      Tags: 
+        - Key: Name
+          Value: JumpHost
+
+  JumpHostSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Allow SSH from anywhere"
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: 22
+        ToPort: 22
+        IpProtocol: tcp
+
+  # Create JumpHost in Public Subnet A
+  JumpHost:
+    Type: AWS::EC2::Instance
+    DependsOn: apiGateway
+    Properties:
+      AvailabilityZone: !GetAtt VPCAPublicSubnet.AvailabilityZone
+      ImageId: ami-0bd6906508e74f692
+      InstanceType: t2.micro
+      SubnetId: !Ref VPCAPublicSubnet
+      SecurityGroups:
+      - !Ref JumpHostSecurityGroup
+      KeyName: !Ref EC2KeyName
+      Tags: 
+        - Key: Name
+          Value: JumpHost
+
+  JumpHostSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Allow SSH from anywhere"
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: 22
+        ToPort: 22
+        IpProtocol: tcp
+
+  # Create Private Instance in VPC A
+  PrivateInstanceVPCA:
+    Type: AWS::EC2::Instance
+    DependsOn: apiGateway
+    Properties:
+      AvailabilityZone: !GetAtt VPCAPrivateSubnet.AvailabilityZone
+      ImageId: ami-0bd6906508e74f692
+      InstanceType: t2.micro
+      SubnetId: !Ref VPCAPrivateSubnet
+      SecurityGroups:
+      - !Ref PrivateInstanceVpcASecurityGroup
+      KeyName: !Ref EC2KeyName
+      Tags: 
+        - Key: Name
+          Value: Private Instance A
+
+  PrivateInstanceVpcASecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Allow SSH from VPC and TGW"
+      SecurityGroupIngress:
+      - CidrIp: 10.0.0.0/8
+        FromPort: 22
+        ToPort: 22
+        IpProtocol: tcp
+
+  # Create Private Instance in VPC B
+  PrivateInstanceVPCB:
+    Type: AWS::EC2::Instance
+    DependsOn: apiGateway
+    Properties:
+      AvailabilityZone: !GetAtt VPCBPrivateSubnet.AvailabilityZone
+      ImageId: ami-0bd6906508e74f692
+      InstanceType: t2.micro
+      SubnetId: !Ref VPCBPrivateSubnet
+      SecurityGroups:
+      - !Ref PrivateInstanceVpcBSecurityGroup
+      KeyName: !Ref EC2KeyName
+      Tags: 
+        - Key: Name
+          Value: Private Instance B
+
+  PrivateInstanceVpcBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Allow SSH from VPC and TGW"
+      SecurityGroupIngress:
+      - CidrIp: 10.0.0.0/8
+        FromPort: 22
+        ToPort: 22
+        IpProtocol: tcp
+
+  # Create Private Instance in VPC C
+  PrivateInstanceVPCC:
+    Type: AWS::EC2::Instance
+    DependsOn: apiGateway
+    Properties:
+      AvailabilityZone: !GetAtt VPCCPrivateSubnet.AvailabilityZone
+      ImageId: ami-0bd6906508e74f692
+      InstanceType: t2.micro
+      SubnetId: !Ref VPCCPrivateSubnet
+      SecurityGroups:
+      - !Ref PrivateInstanceVpcCSecurityGroup
+      KeyName: !Ref EC2KeyName
+      Tags: 
+        - Key: Name
+          Value: Private Instance C
+
+  PrivateInstanceVpcCSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Allow SSH from VPC and TGW"
+      SecurityGroupIngress:
+      - CidrIp: 10.0.0.0/8
+        FromPort: 22
+        ToPort: 22
+        IpProtocol: tcp
