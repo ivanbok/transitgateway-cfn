@@ -282,6 +282,7 @@ Resources:
       SubnetId: !Ref VPCAPublicSubnet
       SecurityGroupIds:
       - !GetAtt JumpHostSecurityGroup.GroupId
+      KeyName: !Ref EC2KeyName
       Tags: 
         - Key: Name
           Value: JumpHost
