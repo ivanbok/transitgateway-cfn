@@ -296,31 +296,6 @@ Resources:
         ToPort: 22
         IpProtocol: tcp
 
-  # Create JumpHost in Public Subnet A
-  JumpHost:
-    Type: AWS::EC2::Instance
-    Properties:
-      AvailabilityZone: !GetAtt VPCAPublicSubnet.AvailabilityZone
-      ImageId: ami-0bd6906508e74f692
-      InstanceType: t2.micro
-      SubnetId: !Ref VPCAPublicSubnet
-      SecurityGroups:
-      - !Ref JumpHostSecurityGroup
-      KeyName: !Ref EC2KeyName
-      Tags: 
-        - Key: Name
-          Value: JumpHost
-
-  JumpHostSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: "Allow SSH from anywhere"
-      SecurityGroupIngress:
-      - CidrIp: 0.0.0.0/0
-        FromPort: 22
-        ToPort: 22
-        IpProtocol: tcp
-
   # Create Private Instance in VPC A
   PrivateInstanceVPCA:
     Type: AWS::EC2::Instance
