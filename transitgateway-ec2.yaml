@@ -280,8 +280,8 @@ Resources:
       ImageId: ami-0bd6906508e74f692
       InstanceType: t2.micro
       SubnetId: !Ref VPCAPublicSubnet
-      SecurityGroups:
-      - !Ref JumpHostSecurityGroup
+      SecurityGroupIds:
+      - !GetAtt JumpHostSecurityGroup.GroupId
       Tags: 
         - Key: Name
           Value: JumpHost
@@ -305,8 +305,8 @@ Resources:
       ImageId: ami-0bd6906508e74f692
       InstanceType: t2.micro
       SubnetId: !Ref VPCAPrivateSubnet
-      SecurityGroups:
-      - !Ref PrivateInstanceVpcASecurityGroup
+      SecurityGroupIds:
+      - !GetAtt PrivateInstanceVpcASecurityGroup.GroupId
       KeyName: !Ref EC2KeyName
       Tags: 
         - Key: Name
@@ -331,8 +331,8 @@ Resources:
       ImageId: ami-0bd6906508e74f692
       InstanceType: t2.micro
       SubnetId: !Ref VPCBPrivateSubnet
-      SecurityGroups:
-      - !Ref PrivateInstanceVpcBSecurityGroup
+      SecurityGroupIds:
+      - !GetAtt PrivateInstanceVpcBSecurityGroup.GroupId
       KeyName: !Ref EC2KeyName
       Tags: 
         - Key: Name
@@ -357,8 +357,8 @@ Resources:
       ImageId: ami-0bd6906508e74f692
       InstanceType: t2.micro
       SubnetId: !Ref VPCCPrivateSubnet
-      SecurityGroups:
-      - !Ref PrivateInstanceVpcCSecurityGroup
+      SecurityGroupIds:
+      - !GetAtt PrivateInstanceVpcCSecurityGroup.GroupId
       KeyName: !Ref EC2KeyName
       Tags: 
         - Key: Name
