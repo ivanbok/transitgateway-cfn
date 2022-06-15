@@ -1,4 +1,4 @@
-# transitgateway-cfn
+# Transitively Peered Virtual Infrastructure
 CloudFormation Code for the Creation of a Transit gateway
 
 Note: Ensure that you have created at least one EC2 private key pair to specify in the stack. 
